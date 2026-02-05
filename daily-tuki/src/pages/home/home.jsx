@@ -8,7 +8,7 @@ export function Home() {
 
   useEffect(() => {
     console.log("tasks:", tasks);
-  }, [tasks]);
+  }, [tasks]);//solo para ver las tareas en consola
 
   return (
     <div>
