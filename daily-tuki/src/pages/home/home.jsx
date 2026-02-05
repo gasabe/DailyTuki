@@ -1,18 +1,24 @@
 import { useEffect, useState } from "react";
 import { useTasks } from "./hooks/useTasks";
+import { useTheme } from "../../hooks/useTheme";
 import { Modal } from "../../components/modal/Modal";
 
 export function Home() {
   const { tasks, addTask } = useTasks();
+  const { theme, toggleTheme } = useTheme();
   const [showWelcome, setShowWelcome] = useState(true);
 
   useEffect(() => {
     console.log("tasks:", tasks);
-  }, [tasks]);//solo para ver las tareas en consola
+  }, [tasks]);
 
   return (
     <div>
       <h1>Daily Tuki</h1>
+
+      <button onClick={toggleTheme}>
+        {theme === "light" ? "🌙" : "☀️"}
+      </button>
 
       <button onClick={() => addTask("tarea nueva")}>
         Agregar tarea

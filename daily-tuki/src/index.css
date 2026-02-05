@@ -2,6 +2,11 @@
   box-sizing: border-box;
 }
 
+body,
+body * {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
 body {
   margin: 0;
   font-family: var(--font-family);
@@ -47,5 +52,5 @@ button {
 }
 
 button:hover {
-  background-color: var(--blue-slate);
+  background-color: var(--cta-green);
 }
