@@ -1,0 +1,115 @@
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface, #fff);
+  border-radius: 8px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.task-item--done {
+  opacity: 0.6;
+}
+
+.task-item--done .task-text {
+  text-decoration: line-through;
+}
+
+.task-item--editing {
+  background: var(--surface-alt, #f5f5f5);
+}
+
+.task-checkbox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.task-checkbox input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border, #ccc);
+  border-radius: 4px;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.task-checkbox input:checked + .checkmark {
+  background: var(--primary, #4f46e5);
+  border-color: var(--primary, #4f46e5);
+}
+
+.task-checkbox input:checked + .checkmark::after {
+  content: "✓";
+  color: white;
+  font-size: 14px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 1rem;
+}
+
+.task-edit-input {
+  flex: 1;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid var(--border, #ccc);
+  border-radius: 4px;
+  outline: none;
+}
+
+.task-edit-input:focus {
+  border-color: var(--primary, #4f46e5);
+}
+
+.task-actions {
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.task-item:hover .task-actions,
+.task-item--editing .task-actions {
+  opacity: 1;
+}
+
+.task-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.task-actions button:hover {
+  opacity: 1;
+}
+
+.btn-save {
+  color: var(--success, #22c55e);
+}
+
+.btn-cancel,
+.btn-delete {
+  color: var(--danger, #ef4444);
+}
+
+.btn-edit {
+  color: var(--primary, #4f46e5);
+}
