@@ -1,7 +1,6 @@
-import { Home } from "./pages/home/home.jsx";
+import { Home } from "./pages/home/Home.jsx";
 
 function App() {
   return <Home />;
 }
-
 export default App;
