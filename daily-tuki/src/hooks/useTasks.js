@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { loadTasks, saveTasks } from "../../../domain/task/tasks.storage.js";
+import { loadTasks, saveTasks } from "../domain/task/tasks.storage.js";
 
 export function useTasks() {
   const [tasks, setTasks] = useState([]);

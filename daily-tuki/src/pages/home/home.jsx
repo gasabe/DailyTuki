@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useTasks } from "./hooks/useTasks";
+import { useTasks } from "../../hooks/useTasks";
 import { useTheme } from "../../hooks/useTheme";
 import { Modal } from "../../components/modal/Modal";
 
