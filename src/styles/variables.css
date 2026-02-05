@@ -18,6 +18,18 @@
   --bg-card: #ffffff;
   --bg-overlay: rgba(74, 102, 112, 0.5);
 
+  /* Aliases para componentes */
+  --bg: var(--bg-main);
+  --text: var(--color-text);
+  --text-muted: var(--khaki-beige);
+  --surface: var(--bg-card);
+  --surface-alt: #f0ede8;
+  --border: #d4d0c8;
+  --primary: var(--jungle-teal);
+  --primary-hover: var(--cta-green);
+  --success: var(--muted-olive);
+  --danger: var(--old-rose);
+
   /* Tipografía */
   --font-family: system-ui, -apple-system, sans-serif;
   --font-size-sm: 0.875rem;
@@ -57,6 +69,18 @@
   --bg-main: #121716;
   --bg-card: #1a211f;
   --bg-overlay: rgba(10, 14, 13, 0.7);
+
+  /* Aliases para componentes (dark) */
+  --bg: var(--bg-main);
+  --text: #e0e0e0;
+  --text-muted: #888;
+  --surface: var(--bg-card);
+  --surface-alt: #242d2a;
+  --border: #3a4743;
+  --primary: var(--jungle-teal);
+  --primary-hover: var(--cta-green);
+  --success: var(--muted-olive);
+  --danger: var(--old-rose);
 
   /* Bordes */
   --border-radius: 10px;
