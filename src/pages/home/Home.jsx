@@ -32,7 +32,6 @@ export function Home() {
     currentStreak,
     bestStreak,
     registerDayResult,
-    checkStreakContinuity,
   } = useStreak();
 
   const { theme, toggleTheme } = useTheme();
@@ -42,20 +41,16 @@ export function Home() {
   });
 
   useEffect(() => {
-    checkStreakContinuity();
-  }, [checkStreakContinuity]);
-
-  useEffect(() => {
     if (dayChanged && previousDayResult) {
-      registerDayResult(previousDayResult.completedCount, previousDayResult.totalCount);
+      registerDayResult(previousDayResult.completedCount, previousDayResult.totalCount, previousDayResult.date);
+      clearPreviousDayResult();
+      return;
     }
-  }, [dayChanged, previousDayResult, registerDayResult]);
 
-  useEffect(() => {
     if (isDayComplete) {
       registerDayResult(completedCount, totalCount);
     }
-  }, [isDayComplete, completedCount, totalCount, registerDayResult]);
+  }, [dayChanged, previousDayResult, isDayComplete, completedCount, totalCount, registerDayResult, clearPreviousDayResult]);
 
   const handleCloseWelcome = () => {
     localStorage.setItem("dailytuki_welcomed", "true");
