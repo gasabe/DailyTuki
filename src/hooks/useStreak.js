@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
 import { storage } from "../services/storage";
+import { getToday, getYesterday } from "../services/dateService";
 
 const STREAK_KEY = storage.KEYS.STREAK;
 
-function getToday() {
-  return new Date().toISOString().split("T")[0];
-}
-
-function getYesterday() {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return d.toISOString().split("T")[0];
+function dayBefore(dateStr) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  date.setDate(date.getDate() - 1);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function loadInitialState() {
@@ -20,7 +21,10 @@ function loadInitialState() {
   }
 
   const { lastCompletedDate } = saved;
-  if (lastCompletedDate && lastCompletedDate !== getToday() && lastCompletedDate !== getYesterday()) {
+  const today = getToday();
+  const yesterday = getYesterday();
+
+  if (lastCompletedDate && lastCompletedDate !== today && lastCompletedDate !== yesterday) {
     return { ...saved, currentStreak: 0 };
   }
 
@@ -45,18 +49,28 @@ export function useStreak() {
       }
 
       if (!dayCompleted) {
-        if (targetDate !== getToday()) {
-          return { ...prev, currentStreak: 0 };
-        }
         return prev;
       }
 
-      const newStreak = prev.currentStreak + 1;
-      return {
+      const expectedPrevDay = dayBefore(targetDate);
+      const isConsecutive =
+        !prev.lastCompletedDate ||
+        prev.lastCompletedDate === expectedPrevDay ||
+        prev.lastCompletedDate === targetDate;
+
+      const newStreak = isConsecutive ? prev.currentStreak + 1 : 1;
+
+      const next = {
         currentStreak: newStreak,
         lastCompletedDate: targetDate,
         bestStreak: Math.max(prev.bestStreak, newStreak),
       };
+
+      if (import.meta.env.DEV) {
+        console.log("[STREAK]", { targetDate, isConsecutive, prev, next });
+      }
+
+      return next;
     });
   }, []);
 

@@ -9,8 +9,8 @@ import "./Home.css";
 
 export function Home() {
   const {
-    tasks,
-    isLoaded,
+    todayTasks,
+    previousDays,
     addTask,
     requestToggle,
     confirmToggle,
@@ -23,9 +23,9 @@ export function Home() {
     progress,
     isDayComplete,
     minRequired,
-    dayChanged,
     previousDayResult,
     clearPreviousDayResult,
+    checkNewDay,
   } = useTasks();
 
   const {
@@ -41,25 +41,26 @@ export function Home() {
   });
 
   useEffect(() => {
-    if (dayChanged && previousDayResult) {
+    if (previousDayResult) {
       registerDayResult(previousDayResult.completedCount, previousDayResult.totalCount, previousDayResult.date);
-      clearPreviousDayResult();
-      return;
     }
+  }, [previousDayResult, registerDayResult]);
 
+  useEffect(() => {
     if (isDayComplete) {
       registerDayResult(completedCount, totalCount);
     }
-  }, [dayChanged, previousDayResult, isDayComplete, completedCount, totalCount, registerDayResult, clearPreviousDayResult]);
+  }, [isDayComplete, completedCount, totalCount, registerDayResult]);
+
+  useEffect(() => {
+    const interval = setInterval(() => checkNewDay(), 60_000);
+    return () => clearInterval(interval);
+  }, [checkNewDay]);
 
   const handleCloseWelcome = () => {
     localStorage.setItem("dailytuki_welcomed", "true");
     setShowWelcome(false);
   };
-
-  if (!isLoaded) {
-    return <div className="loading">Cargando...</div>;
-  }
 
   return (
     <div className="home">
@@ -98,7 +99,8 @@ export function Home() {
 
         <section className="tasks-section">
           <TaskList
-            tasks={tasks}
+            todayTasks={todayTasks}
+            previousDays={previousDays}
             onToggle={requestToggle}
             onUpdate={updateTask}
             onDelete={deleteTask}
@@ -115,7 +117,7 @@ export function Home() {
         <p>Cumplí al menos 2 de 3 objetivos para mantener tu racha 🔥</p>
       </Modal>
 
-      {dayChanged && previousDayResult && (
+      {previousDayResult && (
         <Modal
           open={true}
           title={previousDayResult.wasSuccessful ? "¡Buen trabajo ayer!" : "Nuevo día"}
