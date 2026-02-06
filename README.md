@@ -1,3 +1,4 @@
+App link: ```https://dailytuki.netlify.app/ ```
 # Daily Tuki 
 
 Daily Tuki es una app web minimalista para cumplir **objetivos diarios simples** y mantener una **racha (streak)** de progreso.
