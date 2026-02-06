@@ -50,3 +50,14 @@ Esto evita presión extrema y promueve consistencia.
 ```bash
 npm install
 npm run dev
+```
+---
+## 🛠️ Simulacion de dias por consola
+```bash
+// Crear 3 tareas, completar 2, verificar streak = 1
+__devSkipDay()    // avanzar un día
+// Recargar → debería mostrar "nuevo día", tareas de ayer abajo
+// Crear 3 tareas nuevas, completar 2 → streak = 2
+__devSkipDay(2)   // saltar 2 días (rompe racha)
+// Recargar → streak = 0, día limpio
+__devResetDate()  // volver a fecha real
