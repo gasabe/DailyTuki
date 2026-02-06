@@ -1,0 +1,54 @@
+.streak-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1rem;
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.streak-badge--complete {
+  background: linear-gradient(135deg, var(--success, #a0af84) 0%, var(--primary, #668f80) 100%);
+  color: white;
+}
+
+.streak-main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.streak-fire {
+  font-size: 1.5rem;
+}
+
+.streak-count {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.streak-label {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+.streak-best {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.streak-complete {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+}
+
+.streak-badge--complete .streak-best,
+.streak-badge--complete .streak-complete {
+  color: white;
+  opacity: 0.9;
+}
