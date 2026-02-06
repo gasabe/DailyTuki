@@ -37,18 +37,23 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }) {
 
   return (
     <div className={`task-item ${task.done ? "task-item--done" : ""}`}>
-      <label className="task-checkbox">
+      <label className={`task-checkbox ${task.done ? "task-checkbox--locked" : ""}`}>
         <input
           type="checkbox"
           checked={task.done}
-          onChange={() => onToggle(task.id)}
+          onChange={() => !task.done && onToggle(task.id)}
+          disabled={task.done}
         />
         <span className="checkmark" />
       </label>
       <span className="task-text">{task.text}</span>
       <div className="task-actions">
-        <button className="btn-edit" onClick={() => setIsEditing(true)}>✎</button>
-        <button className="btn-delete" onClick={() => onDelete(task.id)}>🗑</button>
+        {!task.done && (
+          <button className="btn-edit" onClick={() => setIsEditing(true)}>✎</button>
+        )}
+        {!task.done && (
+          <button className="btn-delete" onClick={() => onDelete(task.id)}>🗑</button>
+        )}
       </div>
     </div>
   );
