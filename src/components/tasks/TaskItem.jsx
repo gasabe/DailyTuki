@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./TaskItem.css";
 
-export function TaskItem({ task, onToggle, onUpdate, onDelete }) {
+export function TaskItem({ task, onToggle, onUpdate, onDelete, readOnly = false }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(task.text);
 
@@ -16,6 +16,18 @@ export function TaskItem({ task, onToggle, onUpdate, onDelete }) {
     setEditText(task.text);
     setIsEditing(false);
   };
+
+  if (readOnly) {
+    return (
+      <div className={`task-item task-item--readonly ${task.done ? "task-item--done" : ""}`}>
+        <label className="task-checkbox task-checkbox--locked">
+          <input type="checkbox" checked={task.done} disabled />
+          <span className="checkmark" />
+        </label>
+        <span className="task-text">{task.text}</span>
+      </div>
+    );
+  }
 
   if (isEditing) {
     return (

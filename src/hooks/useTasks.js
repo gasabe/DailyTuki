@@ -1,12 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { storage } from "../services/storage";
+import { getToday } from "../services/dateService";
 
 function makeId() {
   return crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
-function getToday() {
-  return new Date().toISOString().split("T")[0];
 }
 
 function createTask(text) {
@@ -14,11 +11,11 @@ function createTask(text) {
     id: makeId(),
     text: text.trim(),
     done: false,
-    createdAt: new Date().toISOString(),
+    assignedDate: getToday(),
   };
 }
 
-function normalizeTasks(raw) {
+function normalizeTasks(raw, fallbackDate) {
   if (!Array.isArray(raw)) return [];
   return raw.map((t) => {
     if (typeof t === "string") return createTask(t);
@@ -26,97 +23,148 @@ function normalizeTasks(raw) {
       id: t.id ?? makeId(),
       text: t.text ?? t.title ?? "",
       done: Boolean(t.done),
-      createdAt: t.createdAt ?? new Date().toISOString(),
+      assignedDate: t.assignedDate ?? fallbackDate,
     };
   });
 }
 
 const TASKS_KEY = storage.KEYS.TASKS;
-const LAST_DATE_KEY = "dailytuki_last_date_v1";
-const COMPLETED_TODAY_KEY = "dailytuki_completed_today_v1";
+const LAST_DATE_KEY = "dailytuki_last_date_v2";
+
+function formatDayLabel(dateStr) {
+  const today = getToday();
+  if (dateStr === today) return "Hoy";
+
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.toLocaleDateString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+}
+
+function initState() {
+  const lastDate = storage.get(LAST_DATE_KEY);
+  const today = getToday();
+  const fallbackDate = lastDate ?? today;
+  const tasks = normalizeTasks(storage.get(TASKS_KEY) ?? [], fallbackDate);
+
+  let previousDayResult = null;
+
+  if (lastDate && lastDate !== today) {
+    const prevTasks = tasks.filter((t) => t.assignedDate === lastDate);
+    const completedCount = prevTasks.filter((t) => t.done).length;
+    const totalCount = prevTasks.length;
+    const minRequired = Math.min(2, totalCount);
+
+    previousDayResult = {
+      completedCount,
+      totalCount,
+      wasSuccessful: totalCount > 0 && completedCount >= minRequired,
+      date: lastDate,
+    };
+
+    if (import.meta.env.DEV) {
+      console.log("[DAY CHANGE]", lastDate, "→", today, previousDayResult);
+    }
+  }
+
+  storage.set(LAST_DATE_KEY, today);
+  storage.set(TASKS_KEY, tasks);
+
+  if (import.meta.env.DEV) {
+    const todayCount = tasks.filter((t) => t.assignedDate === today).length;
+    console.log("[INIT] today:", today, "| tasks today:", todayCount, "| total:", tasks.length);
+  }
+
+  return { tasks, previousDayResult };
+}
 
 export function useTasks() {
-  const [tasks, setTasks] = useState([]);
-  const [completedTodayIds, setCompletedTodayIds] = useState(new Set());
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [dayChanged, setDayChanged] = useState(false);
-  const [previousDayResult, setPreviousDayResult] = useState(null);
+  const [{ tasks, previousDayResult: initialDayResult }] = useState(initState);
+  const [taskList, setTaskList] = useState(tasks);
+  const [previousDayResult, setPreviousDayResult] = useState(initialDayResult);
   const [pendingToggle, setPendingToggle] = useState(null);
+  const lastSavedRef = useRef(JSON.stringify(tasks));
 
   useEffect(() => {
-    const saved = storage.get(TASKS_KEY) ?? [];
+    const key = JSON.stringify(taskList);
+    if (key !== lastSavedRef.current) {
+      storage.set(TASKS_KEY, taskList);
+      lastSavedRef.current = key;
+    }
+  }, [taskList]);
+
+  const today = getToday();
+
+  const todayTasks = useMemo(
+    () => taskList.filter((t) => t.assignedDate === today),
+    [taskList, today]
+  );
+
+  const previousDays = useMemo(() => {
+    const groups = {};
+    for (const t of taskList) {
+      if (t.assignedDate === today) continue;
+      if (!groups[t.assignedDate]) groups[t.assignedDate] = [];
+      groups[t.assignedDate].push(t);
+    }
+    return Object.entries(groups)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([date, dayTasks]) => ({
+        date,
+        label: formatDayLabel(date),
+        tasks: dayTasks,
+        completedCount: dayTasks.filter((t) => t.done).length,
+        totalCount: dayTasks.length,
+      }));
+  }, [taskList, today]);
+
+  const checkNewDay = useCallback(() => {
     const lastDate = storage.get(LAST_DATE_KEY);
-    const savedCompletedToday = storage.get(COMPLETED_TODAY_KEY) ?? [];
-    const today = getToday();
+    const now = getToday();
+    if (lastDate === now) return false;
 
-    let normalizedTasks = normalizeTasks(saved);
-
-    if (lastDate && lastDate !== today) {
-      const completedCount = normalizedTasks.filter((t) => t.done).length;
-      const totalCount = normalizedTasks.length;
+    setTaskList((prev) => {
+      const prevTasks = prev.filter((t) => t.assignedDate === lastDate);
+      const completedCount = prevTasks.filter((t) => t.done).length;
+      const totalCount = prevTasks.length;
       const minRequired = Math.min(2, totalCount);
-      const wasSuccessful = totalCount > 0 && completedCount >= minRequired;
 
       setPreviousDayResult({
         completedCount,
         totalCount,
-        wasSuccessful,
+        wasSuccessful: totalCount > 0 && completedCount >= minRequired,
         date: lastDate,
       });
 
-      normalizedTasks = normalizedTasks.map((t) => ({ ...t, done: false }));
-      setCompletedTodayIds(new Set());
-      storage.set(COMPLETED_TODAY_KEY, []);
-      setDayChanged(true);
-    } else {
-      setCompletedTodayIds(new Set(savedCompletedToday));
-    }
+      storage.set(LAST_DATE_KEY, now);
+      return prev;
+    });
 
-    storage.set(LAST_DATE_KEY, today);
-    setTasks(normalizedTasks);
-    setIsLoaded(true);
+    return true;
   }, []);
-
-  useEffect(() => {
-    if (isLoaded) {
-      storage.set(TASKS_KEY, tasks);
-    }
-  }, [tasks, isLoaded]);
 
   const addTask = useCallback((text) => {
     const clean = String(text ?? "").trim();
     if (!clean) return false;
-    setTasks((prev) => [createTask(clean), ...prev]);
+    setTaskList((prev) => [createTask(clean), ...prev]);
     return true;
   }, []);
 
   const requestToggle = useCallback((id) => {
-    const task = tasks.find((t) => t.id === id);
-    if (!task) return;
-
-    if (task.done) {
-      return;
-    }
-
+    const task = todayTasks.find((t) => t.id === id);
+    if (!task || task.done) return;
     setPendingToggle({ id, text: task.text });
-  }, [tasks]);
+  }, [todayTasks]);
 
   const confirmToggle = useCallback(() => {
     if (!pendingToggle) return;
-
     const { id } = pendingToggle;
-
-    setTasks((prev) =>
+    setTaskList((prev) =>
       prev.map((t) => (t.id === id ? { ...t, done: true } : t))
     );
-
-    setCompletedTodayIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      storage.set(COMPLETED_TODAY_KEY, Array.from(next));
-      return next;
-    });
-
     setPendingToggle(null);
   }, [pendingToggle]);
 
@@ -127,35 +175,29 @@ export function useTasks() {
   const updateTask = useCallback((id, newText) => {
     const clean = String(newText ?? "").trim();
     if (!clean) return false;
-    setTasks((prev) =>
+    setTaskList((prev) =>
       prev.map((t) => (t.id === id ? { ...t, text: clean } : t))
     );
     return true;
   }, []);
 
   const deleteTask = useCallback((id) => {
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const clearCompleted = useCallback(() => {
-    setTasks((prev) => prev.filter((t) => !t.done));
+    setTaskList((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
   const clearPreviousDayResult = useCallback(() => {
     setPreviousDayResult(null);
-    setDayChanged(false);
   }, []);
 
-  const completedCount = completedTodayIds.size;
-  const totalCount = tasks.length;
+  const completedCount = todayTasks.filter((t) => t.done).length;
+  const totalCount = todayTasks.length;
   const progress = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-
   const minRequired = Math.min(2, totalCount);
   const isDayComplete = totalCount > 0 && completedCount >= minRequired;
 
   return {
-    tasks,
-    isLoaded,
+    todayTasks,
+    previousDays,
     addTask,
     requestToggle,
     confirmToggle,
@@ -163,14 +205,13 @@ export function useTasks() {
     pendingToggle,
     updateTask,
     deleteTask,
-    clearCompleted,
     completedCount,
     totalCount,
     progress,
     isDayComplete,
     minRequired,
-    dayChanged,
     previousDayResult,
     clearPreviousDayResult,
+    checkNewDay,
   };
 }
